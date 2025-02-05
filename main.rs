@@ -1,36 +1,26 @@
-fn main() {
-    let mut i = true;
-    let number =
-        std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().subsec_nanos()
-        % 2;
-    println!("Guess the number!");
-    while i {
-        let mut guess = String::new();
-
-        println!("Please input your guess:");
-        std::io::stdin().read_line(&mut guess).expect("Failed to read line");
-        let guess_number = match guess.trim().parse::<u32>() {
-            Ok(num) => num,
-            Err(_) => {
-                println!("\x1B[91mNot a number :(\x1B[0m");
-                continue;
+fn main(){
+    // localhost on port 42069
+    let listener = std::net::TcpListener::bind("127.0.0.1:42069").expect("Could not bind :(");
+    listener.set_nonblocking(true).expect("Could not set NON-BLOCKING");
+    loop{
+        match listener.accept() {
+            Ok((mut socket, addr)) => {
+                println!("New client: {addr:?}");
+                loop{
+                    let mut buffer: [u8;128] = [0;128];
+                    std::io::Read::read(&mut socket, &mut buffer).unwrap();
+                    match std::io::Write::write(&mut socket, b"Message recieved.\n") {
+                        Ok(_) => {
+                            std::io::Write::write(&mut std::io::stdout(), &buffer).unwrap();
+                        },
+                        Err(_) => {
+                            println!("Closed client: {addr:?}");
+                            break;
+                        },
+                    };
+                };
             },
+            Err(_) => continue,
         };
-        println!("You guessed: {};", guess_number);
-
-        if guess_number == number {
-            println!("\x1B[93m[*]\tYou have guessed it right.\x1B[0m");
-            i = false;
-            guess.clear();
-            continue;
-        }else if guess_number < number {
-            println!("\x1B[91m[+]\thiger\x1B[0m");
-            guess.clear();
-            continue;
-        }else if guess_number > number {
-            println!("\x1B[91m[-]\tlesser\x1B[0m");
-            guess.clear();
-            continue;
-        }
     }
 }
